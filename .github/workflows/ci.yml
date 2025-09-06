@@ -1,0 +1,51 @@
+name: CI Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: playcount_royalty
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+        
+    - name: Run linting
+      run: |
+        pip install flake8 black
+        cd backend
+        flake8 . --max-line-length=127 --ignore=E501
+        black --check .
+        
+    - name: Run tests
+      run: |
+        cd backend
+        python -m pytest tests/ -v --cov=.
+        
+    - name: Build Docker image
+      run: |
+        cd docker
+        docker build -t playcount-royalty:test .
