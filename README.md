@@ -6,8 +6,6 @@ IoT-based audio recognition system for music play tracking and royalty managemen
 
 PlayCount Royalty is a distributed system consisting of ESP32 IoT devices that capture audio samples and a Flask-based backend server that processes these samples for song recognition. The system identifies copyrighted music plays and logs them to a centralized database and Google Sheets for royalty tracking.
 
-## Architecture
-
 
 ## Components
 
