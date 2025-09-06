@@ -1,3 +1,204 @@
-{"canmore.create_textdoc": {"name": "README", "type": "document", "content": "#
-\n\n# PlayCount Royalty\n\nIoT-based audio recognition system for music play tracking and royalty management.\n\nPlayCount Royalty enables real-time detection of copyrighted music plays using ESP32 IoT devices and a Flask backend. It automatically logs plays into a MySQL database and synchronizes them with Google Sheets for royalty reporting.\n\n---\n\n## 🚀 System Overview\n\nThe system is composed of distributed IoT devices that capture short audio samples and transmit them to a central backend. The backend processes and recognizes these samples using audio fingerprinting, stores the results in a database, and synchronizes reports to Google Sheets.\n\n### Key Components\n- ESP32 Devices – Capture 10-second audio clips and send via HTTP\n- Flask Backend – REST API for audio processing and recognition\n- Dejavu – Audio fingerprinting and recognition engine\n- MySQL – Persistent storage for fingerprints and play logs\n- Google Sheets API – Secondary reporting interface for royalties\n\n---\n\n## 📋 Prerequisites\n- Python 3.9+\n- MySQL 8.0+\n- Arduino IDE (for ESP32 firmware)\n- Docker 20.10+ (optional for containerized deployment)\n\n---\n\n## ⚡ Quick Start\n\n### 1. Database Setup\nbash\nmysql -u root -p < database/schema.sql\n\n\n### 2. Backend Setup\nbash\ngit clone https://github.com/yourusername/PlayCount-Royalty.git\ncd PlayCount-Royalty/backend\npython -m venv venv\nsource venv/bin/activate # Linux/Mac\n# venv\\Scripts\\activate # Windows\npip install -r requirements.txt\ncp ../.env.example .env\n# Edit .env with your settings\n\n\n### 3. ESP32 Setup\n- Install required Arduino libraries: WiFi, HTTPClient, ArduinoJson\n- Configure esp32/PlayCountRoyalty.ino with WiFi credentials and server URL\n- Upload to ESP32 with an I2S microphone connected\n\n### 4. Start Server\nbash\npython app.py\n\n\n---\n\n## ⚙️ Configuration\n\n### Environment Variables\nCreate a .env file inside the backend directory:\nini\n# Database Configuration\nDB_HOST=localhost\nDB_USER=root\nDB_PASSWORD=your_mysql_password\nDB_NAME=playcount_royalty\n\n# Google Sheets API\nGSHEETS_CREDS=credentials.json\nGSHEETS_ID=your_google_sheet_id\n\n# Application Settings\nSECRET_KEY=your_secret_key_here\nUPLOAD_FOLDER=uploads\nMAX_CONTENT_LENGTH=16777216\n\n\n### Google Sheets Setup\n1. Create a Google Cloud Platform project\n2. Enable Google Sheets API\n3. Create a service account and download credentials JSON\n4. Share target spreadsheet with the service account email\n\n---\n\n## 📡 API Documentation\n\n### POST /upload\nUpload audio sample for recognition.\n\nHeaders:\n- Device-ID: string (required)\n- Content-Type: multipart/form-data\n\nBody:\n- audio: file (WAV, MP3, FLAC)\n\nResponse:\njson\n{\n \"status\": \"success\",\n \"song_name\": \"Recognized Song Name\",\n \"confidence\": 95.5,\n \"device_id\": \"esp32_001\",\n \"timestamp\": \"2024-01-15T10:30:00.000Z\"\n}\n\n\nStatus Codes:\n- 200: Successfully recognized\n- 400: Invalid request\n- 500: Server error\n\n---\n\n### GET /health\nService health check.\n\nResponse:\njson\n{\n \"status\": \"healthy\",\n \"timestamp\": \"2024-01-15T10:30:00.000Z\"\n}\n\n\n---\n\n## 🗄️ Database Schema\n\n### songs\nsql\nCREATE TABLE songs (\n song_id MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n song_name VARCHAR(250) NOT NULL,\n fingerprinted TINYINT DEFAULT 0,\n file_sha1 BINARY(20),\n artist VARCHAR(250),\n album VARCHAR(250),\n genre VARCHAR(100),\n INDEX(song_name),\n INDEX(artist)\n);\n\n\n### plays\nsql\nCREATE TABLE plays (\n play_id INT AUTO_INCREMENT PRIMARY KEY,\n song_name VARCHAR(255) NOT NULL,\n device_id VARCHAR(100) NOT NULL,\n timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,\n confidence FLOAT NOT NULL,\n recognized_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n INDEX(device_id),\n INDEX(timestamp),\n INDEX(song_name)\n);\n\n\n### devices\nsql\nCREATE TABLE devices (\n device_id VARCHAR(100) PRIMARY KEY,\n device_name VARCHAR(255),\n location VARCHAR(255),\n registered_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n last_seen DATETIME,\n is_active BOOLEAN DEFAULT TRUE\n);\n\n\n---\n\n## 🚢 Deployment\n\n### Docker Deployment\nbash\ndocker-compose -f docker/docker-compose.yml up --build\ndocker-compose -f docker/docker-compose.yml up -d\ndocker-compose -f docker/docker-compose.yml logs -f\n\n\n### Manual Deployment\nbash\ngunicorn --bind 0.0.0.0:5000 --workers 4 app:app\n\n\n---\n\n## 🛠 Development\n\n### Project Structure\n\nPlayCount-Royalty/\n├── esp32/ # ESP32 firmware\n├── backend/ # Flask application\n├── client/ # Test client\n├── database/ # Database schema\n├── docker/ # Container configuration\n├── tests/ # Unit tests\n└── docs/ # Documentation\n\n\n### Testing\nbash\ncd backend\npython -m pytest tests/ -v --cov=.\n\n\n### Code Quality\nbash\nflake8 . --max-line-length=127 --ignore=E501\nblack .\n\n\n---\n\n## 📊 Monitoring and Logging\n- Logs are output to stdout\n- For production, use log aggregation and monitoring solutions (e.g., ELK stack, Prometheus)\n\n---\n\n## 🔒 Security Considerations\n- Use HTTPS in production\n- Validate all input data\n- Secure database credentials\n- Apply regular security updates\n- Implement API rate limiting\n- Enable device authentication\n\n---\n\n## 📄 License\nThis project is licensed under the MIT License. See LICENSE
- for details."}}
+# PlayCount Royalty
+
+IoT-based audio recognition system for music play tracking and royalty management.
+
+## System Overview
+
+PlayCount Royalty is a distributed system consisting of ESP32 IoT devices that capture audio samples and a Flask-based backend server that processes these samples for song recognition. The system identifies copyrighted music plays and logs them to a centralized database and Google Sheets for royalty tracking.
+
+## Architecture
+
+
+## Components
+
+- **ESP32 Devices**: Capture 10-second audio clips and transmit via HTTP
+- **Flask Backend**: REST API for audio processing and recognition
+- **Dejavu**: Audio fingerprinting and recognition engine
+- **MySQL**: Persistent storage for fingerprints and play logs
+- **Google Sheets API**: Secondary logging and reporting interface
+
+## Prerequisites
+
+- Python 3.9+
+- MySQL 8.0+
+- Arduino IDE (for ESP32 firmware)
+- Docker 20.10+ (optional, for containerized deployment)
+
+## Quick Start
+
+### 1. Database Setup
+
+```bash
+# Create and initialize database
+mysql -u root -p < database/schema.sql
+
+```bash
+mysql -u root -p < database/schema.sql
+
+### 2. Backend Setup
+```bash
+git clone https://github.com/yourusername/PlayCount-Royalty.git
+cd PlayCount-Royalty/backend
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+cp ../.env.example .env
+# Edit .env with your settings
+3. ESP32 Setup
+Install required Arduino libraries: WiFi, HTTPClient, ArduinoJson
+
+Configure esp32/PlayCountRoyalty.ino with WiFi credentials and server URL
+
+Upload to ESP32 with I2S microphone connected
+
+4. Start Server
+```bash
+python app.py
+Configuration
+Environment Variables
+Create .env file in backend directory:
+
+ini
+# Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=playcount_royalty
+
+# Google Sheets API
+GSHEETS_CREDS=credentials.json
+GSHEETS_ID=your_google_sheet_id
+
+# Application Settings
+SECRET_KEY=your_secret_key_here
+UPLOAD_FOLDER=uploads
+MAX_CONTENT_LENGTH=16777216
+Google Sheets Setup
+Create Google Cloud Platform project
+
+Enable Google Sheets API
+
+Create service account and download credentials JSON
+
+Share target spreadsheet with service account email
+
+# API Documentation
+POST /upload
+Upload audio sample for recognition.
+
+Headers:
+
+Device-ID: string (required) - Device identifier
+
+Content-Type: multipart/form-data
+
+Body:
+
+audio: file - Audio file (WAV, MP3, FLAC)
+
+Response:
+
+json
+{
+  "status": "success",
+  "song_name": "Recognized Song Name",
+  "confidence": 95.5,
+  "device_id": "esp32_001",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+Status Codes:
+
+200: Successfully recognized
+
+400: Invalid request
+
+500: Server error
+
+GET /health
+Service health check.
+
+Response:
+
+json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+
+## Database Schema
+# Tables
+
+sql
+CREATE TABLE songs (
+    song_id MEDIUMINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    song_name VARCHAR(250) NOT NULL,
+    fingerprinted TINYINT DEFAULT 0,
+    file_sha1 BINARY(20),
+    artist VARCHAR(250),
+    album VARCHAR(250),
+    genre VARCHAR(100),
+    INDEX(song_name),
+    INDEX(artist)
+);
+plays
+
+sql
+CREATE TABLE plays (
+    play_id INT AUTO_INCREMENT PRIMARY KEY,
+    song_name VARCHAR(255) NOT NULL,
+    device_id VARCHAR(100) NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    confidence FLOAT NOT NULL,
+    recognized_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX(device_id),
+    INDEX(timestamp),
+    INDEX(song_name)
+);
+devices
+
+sql
+CREATE TABLE devices (
+    device_id VARCHAR(100) PRIMARY KEY,
+    device_name VARCHAR(255),
+    location VARCHAR(255),
+    registered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_seen DATETIME,
+    is_active BOOLEAN DEFAULT TRUE
+);
+## Deployment
+# Docker Deployment
+
+```bash
+docker-compose -f docker/docker-compose.yml up --build
+docker-compose -f docker/docker-compose.yml up -d
+docker-compose -f docker/docker-compose.yml logs -f
+
+# Manual Deployment
+
+```bash
+gunicorn --bind 0.0.0.0:5000 --workers 4 app:app
+
+
+
+# Testing
+```bash
+cd backend
+python -m pytest tests/ -v --cov=.
+
+# Code Quality
+```bash
+flake8 . --max-line-length=127 --ignore=E501
+black.
+Monitoring and Logging
+Application logs are output to stdout. For production deployment, consider log aggregation and monitoring solutions.
+
+Security Considerations
+Use HTTPS in production
+Validate all input data
+Secure database credentials
+Regular security updates
+API rate limiting
+
+
+
