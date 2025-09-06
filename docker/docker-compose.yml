@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  web:
+    build: 
+      context: ../backend
+      dockerfile: ../docker/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=playcount_royalty
+      - SECRET_KEY=your-production-secret-key
+      - GSHEETS_CREDS=/app/credentials.json
+    volumes:
+      - ./uploads:/app/uploads
+      - ../credentials.json:/app/credentials.json:ro
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: playcount_royalty
+      MYSQL_USER: playcount_user
+      MYSQL_PASSWORD: user_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
